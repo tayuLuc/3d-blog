@@ -76,14 +76,68 @@ export function nodeTex(text, color) {
   return t;
 }
 
-export function stampTex() {
+export function stampTex(text = '✓ ПРОЧИТАНО', color = '#4dd8c7') {
   const [c, x] = cnv(256, 96);
   x.fillStyle = 'rgba(6,26,24,.85)'; x.fillRect(0, 0, 256, 96);
-  x.strokeStyle = '#4dd8c7'; x.lineWidth = 4; x.strokeRect(4, 4, 248, 88);
-  x.fillStyle = '#4dd8c7';
+  x.strokeStyle = color; x.lineWidth = 4; x.strokeRect(4, 4, 248, 88);
+  x.fillStyle = color;
   x.font = '600 34px "JetBrains Mono", monospace';
   x.textAlign = 'center'; x.textBaseline = 'middle';
-  x.fillText('✓ ПРОЧИТАНО', 128, 50);
+  x.fillText(text, 128, 50);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
+export function pageTex(q, n) {
+  const [c, x] = cnv(512, 704);
+  x.fillStyle = '#f2efe4'; x.fillRect(0, 0, 512, 704);
+  x.fillStyle = '#e6e1d0'; x.fillRect(0, 0, 512, 74);
+  x.fillStyle = '#b06a00';
+  x.font = '600 26px "JetBrains Mono", monospace';
+  x.fillText(`ВХОДЯЩЕЕ // №${n}`, 24, 48);
+  x.strokeStyle = '#171a1f'; x.lineWidth = 3;
+  x.beginPath(); x.moveTo(0, 74); x.lineTo(512, 74); x.stroke();
+  x.fillStyle = '#171a1f';
+  x.font = '500 38px "JetBrains Mono", monospace';
+  wrapTxt(x, q, 26, 140, 460, 52);
+  x.fillStyle = '#8a8574';
+  x.font = '400 20px "JetBrains Mono", monospace';
+  x.fillText('chat/completions · message', 26, 668);
+  x.strokeStyle = '#171a1f'; x.lineWidth = 4;
+  x.strokeRect(6, 6, 500, 692);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
+export function pageBackTex() {
+  const [c, x] = cnv(512, 704);
+  x.fillStyle = '#f2efe4'; x.fillRect(0, 0, 512, 704);
+  x.fillStyle = '#e6e1d0'; x.fillRect(0, 0, 512, 74);
+  x.fillStyle = '#b06a00';
+  x.font = '600 26px "JetBrains Mono", monospace';
+  x.fillText('ВХОДЯЩЕЕ // №?', 24, 48);
+  x.fillStyle = '#171a1f';
+  for (let y = 120; y < 600; y += 52) {
+    x.fillRect(26, y, 180 + Math.random() * 260, 30);
+  }
+  x.strokeStyle = '#171a1f'; x.lineWidth = 4;
+  x.strokeRect(6, 6, 500, 692);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
+export function optionTex(text, color = '#f2efe4') {
+  const [c, x] = cnv(420, 140);
+  x.fillStyle = 'rgba(10,12,15,.85)'; x.fillRect(0, 0, 420, 140);
+  x.strokeStyle = color; x.lineWidth = 3; x.strokeRect(3, 3, 414, 134);
+  x.fillStyle = color;
+  x.font = '500 34px "Golos Text", sans-serif';
+  if (x.measureText(text).width > 380) x.font = '500 26px "Golos Text", sans-serif';
+  x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.fillText(text, 210, 72, 396);
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
   return t;

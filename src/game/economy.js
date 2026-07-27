@@ -1,38 +1,41 @@
 import { bus } from '../core/bus.js';
 
-const CFG = {
-  max: 96, regen: 9,
-  drain: 12,
-  focusDrain: 2.6,
-  solveReward: 48,
-  lowAt: 18, recoverAt: 30,
-};
+const CFG = { max: 96, drain: 12, focusDrain: 2.6, reward: 26, punish: 18, lowAt: 22 };
 
-let tokens = CFG.max;
-let solved = 0;
-let exhausted = false;
+let tokens = CFG.max, drift = 0, exhausted = false;
 
 function publish() {
   bus.emit('tokens:change', { tokens, max: CFG.max, low: tokens < CFG.lowAt, exhausted });
 }
+function hitZero() {
+  if (!exhausted) { exhausted = true; bus.emit('tokens:empty'); }
+}
 
 export const economy = {
+  setDrift(v) { drift = v; },
   tick(dt) {
-    tokens = Math.min(CFG.max, tokens + CFG.regen * dt);
-    if (exhausted && tokens >= CFG.recoverAt) exhausted = false;
+    if (drift) {
+      tokens = Math.max(0, Math.min(CFG.max, tokens + drift * dt));
+      if (tokens === 0) hitZero();
+    }
     publish();
   },
   drain(amount) {
     if (exhausted) return 0;
     const d = Math.min(tokens, amount);
     tokens -= d;
-    if (tokens <= 0) { tokens = 0; exhausted = true; bus.emit('tokens:empty'); }
+    if (tokens <= 0) { tokens = 0; hitZero(); }
     publish();
     return d;
   },
   drainRate: focus => CFG.drain * (focus ? CFG.focusDrain : 1),
+  punish(n = CFG.punish) {
+    tokens = Math.max(0, tokens - n);
+    if (tokens === 0) hitZero();
+    publish();
+  },
+  reward(n = CFG.reward) { tokens = Math.min(CFG.max, tokens + n); publish(); },
+  refill() { tokens = CFG.max; exhausted = false; publish(); },
   isExhausted: () => exhausted,
-  reward() { tokens = Math.min(CFG.max, tokens + CFG.solveReward); publish(); },
-  addSolved() { solved++; bus.emit('score:change', { solved }); },
-  snapshot() { return { tokens, max: CFG.max, low: tokens < CFG.lowAt, exhausted, solved }; },
+  snapshot() { return { tokens, max: CFG.max, low: tokens < CFG.lowAt, exhausted }; },
 };

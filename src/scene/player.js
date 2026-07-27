@@ -15,7 +15,9 @@ export function createPlayer({ scene, camera, dom }) {
   bus.on('charge:state', e => { attLight.intensity = e.progress * (e.focusing ? 14 : 9); });
 
   const keys = {};
-  let bob = 0, focusing = false;
+  let bob = 0, focusing = false, bounds = CFG.bounds, shake = 0;
+
+  bus.on('noise:spike', ({ power = 1 }) => { shake = Math.max(shake, Math.min(1.4, power)); });
 
   addEventListener('keydown', e => {
     keys[e.code] = true;
@@ -34,14 +36,18 @@ export function createPlayer({ scene, camera, dom }) {
     const f = (keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0);
     const r = (keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0);
     if (f||r) { controls.moveForward(f*CFG.speed*dt); controls.moveRight(r*CFG.speed*dt); bob+=dt*9; }
-    camera.position.x = clamp(camera.position.x, -CFG.bounds.x, CFG.bounds.x);
-    camera.position.z = clamp(camera.position.z, CFG.bounds.zMin, CFG.bounds.zMax);
+    camera.position.x = clamp(camera.position.x, -bounds.x, bounds.x);
+    camera.position.z = clamp(camera.position.z, bounds.zMin, bounds.zMax);
     camera.position.y = CFG.eye+((f||r)?Math.sin(bob)*CFG.headBob:0);
   }
 
   function update(dt, t) {
     if (controls.isLocked) move(dt);
     else if (isTouch) { camera.position.x=Math.sin(t*.25)*1.2; camera.lookAt(0,1.6,-4); }
+    if (shake > 0) {
+      camera.rotation.z = (Math.random()-.5)*.06*shake;
+      shake = Math.max(0, shake-dt*2.2);
+    } else camera.rotation.z = 0;
   }
 
   return {
@@ -49,5 +55,6 @@ export function createPlayer({ scene, camera, dom }) {
     isLocked: () => controls.isLocked,
     isFocusing: () => focusing && controls.isLocked,
     unlock: () => { if (controls.isLocked) controls.unlock(); },
+    setBounds(b) { bounds = b ?? CFG.bounds; },
   };
 }

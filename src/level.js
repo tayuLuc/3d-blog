@@ -1,7 +1,7 @@
 import { bus } from './core/bus.js';
 
 const LVL_TAG = ['УР.0 — ЧЁРНЫЙ ЯЩИК', 'УР.1 — ЦИКЛ АГЕНТА'];
-const UNLOCK_SOLVED = 3;
+const UNLOCK_SHIFTS = 1;
 
 export function createProgress() {
   const dots = [...document.querySelectorAll('.lvls i')];
@@ -23,12 +23,12 @@ export function createProgress() {
     localStorage.setItem('bb.level', n);
     paint();
     bus.emit('level:unlock', { level: n });
-    bus.emit('toast', 'УРОВЕНЬ 1 ОТКРЫТ — КОРОБКА РАСКРЫЛАСЬ В ЦИКЛ');
+    bus.emit('toast', 'УРОВЕНЬ 1 ОТКРЫТ — НОЧНАЯ СМЕНА ПРОДОЛЖАЕТСЯ');
   }
 
-  bus.on('task:solved', () => {
+  bus.on('shift:complete', () => {
     solved++;
-    if (level === 0 && solved >= UNLOCK_SOLVED) unlock(1);
+    if (level === 0 && solved >= UNLOCK_SHIFTS) unlock(1);
   });
 
   paint();

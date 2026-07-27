@@ -14,22 +14,33 @@ const POSES = {
   entropy: { pos: [0, 1.9, 3.4],     look: [0, 1.7, -1] },
 };
 const RING_CENTER = new THREE.Vector3(0, 1.7, -1);
-const SPAWN = { pos: [0, 1.65, 4.3], look: [0, 1.6, -6] };
+const SPAWN = { pos: [0, 1.65, 9], look: [0, 1.5, -4] };
 
-export function createDirector({ room, loop, capsule, camera, progress }) {
+export function createDirector({ room, loop, capsule, warehouse, shift, camera, progress }) {
   let mode = 'split';
   let section = 'room';
   const cur = { pos: camera.position.clone(), look: new THREE.Vector3(0, 1.8, -4) };
   const tPos = new THREE.Vector3(), tLook = new THREE.Vector3();
 
   function apply() {
-    const lvl = mode === '3d' ? progress.get() : (SEC_LEVEL[section] ?? 0);
-    const open = lvl >= 1;
-    room.setOpen(open);
-    if (open) loop.show(); else loop.hide();
-    loop.setDemo(mode !== '3d' && open);
-    capsule.setDemo(mode !== '3d');
-    capsule.setActive(mode === '3d' || !open);
+    if (mode === '3d') {
+      room.setVisible(false);
+      capsule.setActive(false);
+      loop.hide();
+      loop.setDemo(false);
+      warehouse.setVisible(true);
+      shift.start();
+    } else {
+      warehouse.setVisible(false);
+      shift.stop();
+      room.setVisible(true);
+      const open = (SEC_LEVEL[section] ?? 0) >= 1;
+      room.setOpen(open);
+      if (open) loop.show(); else loop.hide();
+      loop.setDemo(open);
+      capsule.setDemo(true);
+      capsule.setActive(!open);
+    }
   }
 
   function setMode(m) {
@@ -39,13 +50,12 @@ export function createDirector({ room, loop, capsule, camera, progress }) {
       camera.lookAt(...SPAWN.look);
       cur.pos.copy(camera.position);
       cur.look.set(...SPAWN.look);
-      loop.reset();
-      capsule.setActive(false);
     } else {
       cur.pos.copy(camera.position);
       camera.getWorldDirection(tLook);
       cur.look.copy(camera.position).addScaledVector(tLook, 4);
     }
+    bus.emit('noise:spike', { power: .5 });
     apply();
   }
 
@@ -75,8 +85,6 @@ export function createDirector({ room, loop, capsule, camera, progress }) {
     camera.position.copy(cur.pos);
     camera.lookAt(cur.look);
   }
-
-  bus.on('level:unlock', apply);
 
   return { setMode, setSection, update, apply };
 }

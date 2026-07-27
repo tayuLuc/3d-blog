@@ -43,6 +43,7 @@ export function createAttention({ camera, getTargets, getFocus }) {
       progress: clamp01(progress),
       focusing: !!getFocus(),
       exhausted: economy.isExhausted(),
+      ref: current?.ref ?? null,
     });
 
     const label = current?.label ?? null;

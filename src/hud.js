@@ -61,9 +61,9 @@ export function createHud() {
     const n = performance.now();
     if (n - dryT < 1200) return;
     dryT = n;
-    showToast('КОНТЕКСТ ПУСТ — ПЕРЕДОХНИ');
+    showToast('КОНТЕКСК ПОПОВНЕНИЙ — ШУМ ЗАГЛУШАЕТ');
   });
 
   paintTokens(economy.snapshot());
-  scoreEl.textContent = economy.snapshot().solved;
+  scoreEl.textContent = '0';
 }
