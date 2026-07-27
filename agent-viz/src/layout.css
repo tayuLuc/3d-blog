@@ -1,0 +1,165 @@
+:root {
+  --bg: #0e0e12;
+  --fg: #e8e8ec;
+  --muted: #6e6e80;
+  --accent: #ff6a00;
+  --cyan: #00d4ff;
+  --card: #1a1a24;
+  --border: #2a2a36;
+  --grid-gap: 0px;
+  --blog-width: 1fr;
+  --scene-width: 1fr;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: 'Golos Text', sans-serif;
+  overflow: hidden;
+}
+
+h1, h2, h3 { font-family: 'Tektur', sans-serif; }
+
+.topbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.5rem;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.logo {
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: var(--accent);
+  letter-spacing: -0.02em;
+}
+
+.modes { display: flex; gap: 0.4rem; }
+
+.modes button {
+  padding: 0.4rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.modes button:hover { background: var(--card); color: var(--fg); }
+
+.modes button.active {
+  background: var(--accent);
+  color: #000;
+  border-color: var(--accent);
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: var(--blog-width) var(--scene-width);
+  gap: var(--grid-gap);
+  height: 100vh;
+  padding-top: 56px;
+  transition: grid-template-columns 0.4s ease, var(--grid-gap) 0.4s ease;
+}
+
+.panel { overflow: hidden; }
+
+.blog-panel {
+  padding: 2rem;
+  overflow-y: auto;
+  border-right: 1px solid var(--border);
+}
+
+.scene-panel {
+  position: relative;
+  background: #000;
+}
+
+#scene-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.hud {
+  position: absolute;
+  bottom: 1rem;
+  left: 1rem;
+  display: flex;
+  gap: 1rem;
+  font-size: 0.8rem;
+  color: var(--cyan);
+  font-family: monospace;
+}
+
+/* Mode transitions via data-mode */
+body[data-mode="blog"] {
+  --blog-width: 1fr;
+  --scene-width: 0fr;
+  --grid-gap: 0px;
+}
+
+body[data-mode="blog"] .scene-panel { display: none; }
+body[data-mode="blog"] .blog-panel { border-right: none; }
+
+body[data-mode="together"] {
+  --blog-width: 1fr;
+  --scene-width: 1fr;
+  --grid-gap: 0;
+}
+
+body[data-mode="3d"] {
+  --blog-width: 0fr;
+  --scene-width: 1fr;
+  --grid-gap: 0px;
+}
+
+body[data-mode="3d"] .blog-panel { display: none; }
+
+@media (max-width: 768px) {
+  body[data-mode="blog"],
+  body[data-mode="together"] {
+    --blog-width: 0fr;
+    --scene-width: 1fr;
+  }
+  body[data-mode="blog"] .blog-panel { display: none; }
+  body[data-mode="together"] .blog-panel { display: none; }
+}
+
+/* Blog typography */
+.blog-panel h2 {
+  font-size: 1.6rem;
+  margin-bottom: 0.5rem;
+  color: var(--fg);
+}
+
+.blog-panel h3 {
+  font-size: 1.1rem;
+  margin: 1.5rem 0 0.5rem;
+  color: var(--cyan);
+}
+
+.blog-panel p {
+  line-height: 1.65;
+  margin-bottom: 1rem;
+  color: var(--muted);
+}
+
+.blog-panel a { color: var(--accent); }
+
+/* Scrollspy highlight */
+.chapter.highlight h2 {
+  color: var(--accent);
+  transition: color 0.3s;
+}
