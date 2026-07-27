@@ -1,0 +1,6 @@
+.codegraph
+.omo/
+node_modules/
+_worktrees/
+*.log
+.DS_Store
