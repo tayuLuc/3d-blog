@@ -1,7 +1,0 @@
-a{color:inherit;text-decoration:none}
-.top{height:56px;display:flex;align-items:center;gap:14px;padding:0 20px;
-  background:var(--box);border-bottom:1px solid var(--line)}
-.mark{width:13px;height:13px;border:2px solid var(--amber);position:relative;flex:none}
-.mark::after{content:'';position:absolute;inset:3px;background:var(--amber)}
-.word{font:600 15px var(--disp);letter-spacing:.06em;color:#f4f2ea}
-.word em{font-style:normal;color:var(--amber)}

@@ -11,7 +11,7 @@ export default defineConfig({
   build: {
     cssMinify: 'lightningcss',
     rollupOptions: {
-      input: { hub: page('index.html'), level: page('level.html') },
+      input: { level: page('level.html') },
       output: { manualChunks: id => id.includes('node_modules/three/') ? 'three' : undefined },
     },
   },
