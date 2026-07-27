@@ -1,6 +1,9 @@
-const LVL_TAG = ['УР.0 — ЧЁРНЫЙ ЯЩИК', 'УР.1 — ЦИКЛ АГЕНТА'];
+import { bus } from './core/bus.js';
 
-export function createProgress({ hud, room, loop }) {
+const LVL_TAG = ['УР.0 — ЧЁРНЫЙ ЯЩИК', 'УР.1 — ЦИКЛ АГЕНТА'];
+const UNLOCK_SOLVED = 3;
+
+export function createProgress({ room, loop }) {
   const dots = [...document.querySelectorAll('.lvls i')];
   const gate = document.getElementById('gate0');
   const level1 = document.getElementById('level1');
@@ -9,12 +12,11 @@ export function createProgress({ hud, room, loop }) {
   let solved = 0;
 
   function open(n) {
-    if (n === 1) {
-      room.openWalls();
-      loop.show();
-      gate.classList.add('open');
-      level1.classList.add('unlocked');
-    }
+    if (n !== 1) return;
+    room.openWalls();
+    loop.show();
+    gate.classList.add('open');
+    level1.classList.add('unlocked');
   }
   function paint() {
     dots.forEach((d, i) => d.classList.toggle('on', i <= level));
@@ -25,15 +27,19 @@ export function createProgress({ hud, room, loop }) {
     if (level >= n) return;
     level = n;
     localStorage.setItem('bb.level', n);
-    paint(); open(n);
-    hud.toast('УРОВЕНЬ 1 ОТКРЫТ — КОРОБКА РАСКРЫЛАСЬ В ЦИКЛ');
+    paint();
+    open(n);
+    bus.emit('level:unlock', { level: n });
+    bus.emit('toast', 'УРОВЕНЬ 1 ОТКРЫТ — КОРОБКА РАСКРЫЛАСЬ В ЦИКЛ');
   }
+
+  bus.on('task:solved', () => {
+    solved++;
+    if (level === 0 && solved >= UNLOCK_SOLVED) unlock(1);
+  });
 
   paint();
   if (level >= 1) open(level);
 
-  return {
-    get: () => level,
-    onSolved() { solved++; if (level === 0 && solved >= 3) unlock(1); },
-  };
+  return { get: () => level };
 }

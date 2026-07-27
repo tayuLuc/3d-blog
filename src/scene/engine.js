@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import { getMode } from '../modes.js';
 
 export function createEngine(canvas, stage) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -13,11 +12,10 @@ export function createEngine(canvas, stage) {
   camera.position.set(0, 1.65, 4.3);
   scene.add(camera);
 
-  let stageVisible = true;
+  let visible = true;
   function resize() {
     const w = stage.clientWidth, h = stage.clientHeight;
-    stageVisible = w > 30 && getMode() !== 'blog';
-    if (!stageVisible) return;
+    if (w < 30 || !visible) return;
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
@@ -27,20 +25,21 @@ export function createEngine(canvas, stage) {
 
   const listeners = [];
   let last = performance.now(), T = 0;
-  function loop(now) {
-    requestAnimationFrame(loop);
+  function frame(now) {
+    requestAnimationFrame(frame);
     const dt = Math.min(.05, (now - last) / 1000);
     last = now;
-    if (!stageVisible) return;
+    if (!visible) return;
     T += dt;
     listeners.forEach(f => f(dt, T));
     renderer.render(scene, camera);
   }
-  requestAnimationFrame(loop);
+  requestAnimationFrame(frame);
 
   return {
     renderer, scene, camera,
     onFrame(fn) { listeners.push(fn); },
-    isVisible: () => stageVisible,
+    setVisible(v) { visible = v; resize(); },
+    isVisible: () => visible,
   };
 }

@@ -1,9 +1,23 @@
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 import { clamp } from '../utils.js';
+import { bus } from '../core/bus.js';
+import { economy } from '../game/economy.js';
 
-export function createPlayer({ scene, camera, dom, hud, tray, onTrayHit, getAimMesh, onAim, isVisible, worldHit }) {
+const CFG = {
+  eye: 1.65,
+  speed: 3.4,
+  headBob: .03,
+  bounds: { x: 4.3, zMin: -5.1, zMax: 5.5 },
+  bullet: { speed: 22, life: 1.4, offset: .5, drop: .1 },
+  gun: { x: .3, y: -.3, z: -.55 },
+  recoil: { decay: 6, kickZ: .09, kickRot: .12 },
+  muzzle: { peak: 46, decay: 260, flashDecay: 14 },
+};
+
+export function createPlayer({ scene, camera, dom, tray, worldHit, getAimMesh }) {
   const controls = new PointerLockControls(camera, dom);
+  const isTouch = matchMedia('(pointer:coarse)').matches;
 
   const gun = new THREE.Group();
   const gmat = new THREE.MeshStandardMaterial({ color: '#23272f', roughness: .45, metalness: .65 });
@@ -14,7 +28,7 @@ export function createPlayer({ scene, camera, dom, hud, tray, onTrayHit, getAimM
   const ggrip = new THREE.Mesh(new THREE.BoxGeometry(.075, .2, .1), gmat);  ggrip.position.set(0, -.15, .13);
   ggrip.rotation.x = .28;
   gun.add(gb, gbar, gtip, ggrip);
-  gun.position.set(.3, -.3, -.55);
+  gun.position.set(CFG.gun.x, CFG.gun.y, CFG.gun.z);
   camera.add(gun);
 
   const flashMat = new THREE.MeshBasicMaterial({ color: '#ffd27a', transparent: true, opacity: 0,
@@ -36,16 +50,9 @@ export function createPlayer({ scene, camera, dom, hud, tray, onTrayHit, getAimM
   });
   addEventListener('keyup', e => keys[e.code] = false);
 
-  const overlay = document.getElementById('overlay');
-  const isTouch = matchMedia('(pointer:coarse)').matches;
-  if (isTouch) {
-    document.getElementById('ovTitle').innerHTML = '<i class="pulse"></i>3D — С ДЕСКТОПА';
-    document.getElementById('ovKeys').textContent = 'Нужны клавиатура и мышь: WASD + ЛКМ.';
-    overlay.style.cursor = 'default';
-  }
-  overlay.addEventListener('click', () => { if (!isTouch) controls.lock(); });
-  controls.addEventListener('lock',   () => { hud.setLocked(true);  overlay.classList.add('hidden'); });
-  controls.addEventListener('unlock', () => { hud.setLocked(false); if (isVisible()) overlay.classList.remove('hidden'); });
+  bus.on('lock:request', () => { if (!isTouch) controls.lock(); });
+  controls.addEventListener('lock',   () => bus.emit('lock:change', { locked: true }));
+  controls.addEventListener('unlock', () => bus.emit('lock:change', { locked: false }));
   dom.addEventListener('mousedown', e => { if (e.button === 0 && controls.isLocked) shoot(); });
 
   const shotGeo = new THREE.OctahedronGeometry(.05);
@@ -54,66 +61,71 @@ export function createPlayer({ scene, camera, dom, hud, tray, onTrayHit, getAimM
   let recoil = 0;
 
   function shoot() {
-    if (!hud.spendToken()) return;
+    if (!economy.spend()) return;
     const m = new THREE.Mesh(shotGeo, shotMat);
     const dir = new THREE.Vector3();
     camera.getWorldDirection(dir);
-    m.position.copy(camera.position).addScaledVector(dir, .5);
-    m.position.y -= .1;
+    m.position.copy(camera.position).addScaledVector(dir, CFG.bullet.offset);
+    m.position.y -= CFG.bullet.drop;
     scene.add(m);
-    shots.push({ m, dir, life: 1.4 });
-    recoil = 1; muzzleLight.intensity = 46; flashMat.opacity = .9;
-    hud.kickCross();
+    shots.push({ m, dir, life: CFG.bullet.life });
+    recoil = 1;
+    muzzleLight.intensity = CFG.muzzle.peak;
+    flashMat.opacity = .9;
+    bus.emit('shot:fired');
   }
 
   function move(dt) {
     const f = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0);
     const r = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0);
     if (f || r) {
-      controls.moveForward(f * 3.4 * dt);
-      controls.moveRight(r * 3.4 * dt);
+      controls.moveForward(f * CFG.speed * dt);
+      controls.moveRight(r * CFG.speed * dt);
       bob += dt * 9;
     }
-    camera.position.x = clamp(camera.position.x, -4.3, 4.3);
-    camera.position.z = clamp(camera.position.z, -5.1, 5.5);
-    camera.position.y = 1.65 + ((f || r) ? Math.sin(bob) * .03 : 0);
+    camera.position.x = clamp(camera.position.x, -CFG.bounds.x, CFG.bounds.x);
+    camera.position.z = clamp(camera.position.z, CFG.bounds.zMin, CFG.bounds.zMax);
+    camera.position.y = CFG.eye + ((f || r) ? Math.sin(bob) * CFG.headBob : 0);
   }
 
   function updateGun(dt, t) {
-    recoil = Math.max(0, recoil - dt * 6);
-    gun.position.z = -.55 + recoil * .09;
-    gun.rotation.x = recoil * .12;
-    flashMat.opacity = Math.max(0, flashMat.opacity - dt * 14);
-    muzzleLight.intensity = Math.max(0, muzzleLight.intensity - dt * 260);
-    gun.position.y = -.3 + Math.sin(bob) * .008 + Math.sin(t * 1.6) * .004;
-    gun.position.x = .3 + Math.cos(bob * .5) * .006;
+    recoil = Math.max(0, recoil - dt * CFG.recoil.decay);
+    gun.position.z = CFG.gun.z + recoil * CFG.recoil.kickZ;
+    gun.rotation.x = recoil * CFG.recoil.kickRot;
+    flashMat.opacity = Math.max(0, flashMat.opacity - dt * CFG.muzzle.flashDecay);
+    muzzleLight.intensity = Math.max(0, muzzleLight.intensity - dt * CFG.muzzle.decay);
+    gun.position.y = CFG.gun.y + Math.sin(bob) * .008 + Math.sin(t * 1.6) * .004;
+    gun.position.x = CFG.gun.x + Math.cos(bob * .5) * .006;
   }
 
   function updateShots(dt) {
     for (let i = shots.length - 1; i >= 0; i--) {
       const s = shots[i];
-      s.m.position.addScaledVector(s.dir, 22 * dt);
+      s.m.position.addScaledVector(s.dir, CFG.bullet.speed * dt);
       s.m.rotation.x += dt * 9;
       s.m.rotation.y += dt * 7;
       s.life -= dt;
       const p = s.m.position;
       let dead = s.life <= 0;
-      if (!dead && worldHit && worldHit(p)) dead = true;
+      if (!dead && worldHit?.(p)) dead = true;
       if (!dead && p.z <= tray.z) {
         dead = true;
-        const direct = Math.abs(p.x - tray.x) < tray.halfX && Math.abs(p.y - tray.y) < tray.halfY;
-        onTrayHit(direct);
+        bus.emit('tray:hit', {
+          direct: Math.abs(p.x - tray.x) < tray.halfX && Math.abs(p.y - tray.y) < tray.halfY,
+        });
       }
       if (dead) { scene.remove(s.m); shots.splice(i, 1); }
     }
   }
 
   const ray = new THREE.Raycaster();
+  const center = { x: 0, y: 0 };
+  let aimed = false;
   function updateAim() {
-    const mesh = getAimMesh();
-    if (!mesh) { onAim(false); return; }
-    ray.setFromCamera({ x: 0, y: 0 }, camera);
-    onAim(ray.intersectObject(mesh).length > 0);
+    const mesh = getAimMesh?.() ?? null;
+    let hit = false;
+    if (mesh) { ray.setFromCamera(center, camera); hit = ray.intersectObject(mesh).length > 0; }
+    if (hit !== aimed) { aimed = hit; bus.emit('aim:change', { hit }); }
   }
 
   function update(dt, t) {
