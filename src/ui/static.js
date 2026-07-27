@@ -4,6 +4,7 @@ import { economy } from '../game/economy.js';
 export function createStatic({ gl }) {
   const canvas = document.getElementById('grain');
   const dread = document.getElementById('dread');
+  if (!canvas || !dread) return { update() {} };
   const ctx = canvas.getContext('2d');
   const W = 160, H = 90;
   canvas.width = W;

@@ -25,7 +25,7 @@ export function createRoom(scene) {
   edges.position.copy(roomMesh.position); group.add(edges);
 
   const outerGrid = new THREE.GridHelper(90, 90, '#22303a', '#141b22');
-  outerGrid.position.y = -.06; outerGrid.material.transparent = true; outerGrid.material.opacity = 0;
+  outerGrid.position.y = .02; outerGrid.material.transparent = true; outerGrid.material.opacity = 0;
   group.add(outerGrid);
 
   const stripMat = new THREE.MeshStandardMaterial({ color: '#0b0d10', emissive: '#39424e', emissiveIntensity: .55 });

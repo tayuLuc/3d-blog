@@ -9,6 +9,7 @@ import { createHud } from './hud.js';
 import { createOverlay } from './ui/overlay.js';
 import { createStatic } from './ui/static.js';
 import { createDirector } from './director.js';
+import { economy } from './game/economy.js';
 import { createAttention } from './game/attention.js';
 import { createPages } from './game/pages.js';
 import { createShift } from './game/shift.js';
@@ -50,6 +51,7 @@ bus.on('task:spawn', ({ task }) => {
   bus.emit('toast', 'НОВОЕ СООБЩЕНИЕ — ИЩИ СТРАНИЦУ МЕЖДУ СТОЙКАМИ');
 });
 bus.on('page:solved', ({ task }) => {
+  capsule.markRead();
   capsule.trySolve();
   loop.kick((task.steps || 1) + 1);
 });
