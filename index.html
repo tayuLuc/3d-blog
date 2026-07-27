@@ -3,188 +3,119 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BLACKBOX/AGENT — как устроен ИИ-агент изнутри</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='4' y='4' width='24' height='24' fill='none' stroke='%23ffb224' stroke-width='4'/><rect x='13' y='13' width='6' height='6' fill='%23ffb224'/></svg>">
+<title>BLACKBOX/AGENT — конструктор агентов изнутри</title>
+<style>
+:root{
+  --ink:#171a1f; --paper:#f1efe7; --paper-2:#e7e4d8;
+  --box:#0d0f13; --box-2:#14171d; --line:#262b33;
+  --amber:#ffb224; --amber-d:#b06a00; --cyan:#4dd8c7;
+  --mut:#6b7480; --mut-l:#8b93a0;
+  --disp:'Tektur',sans-serif; --body:'Golos Text',sans-serif; --mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{height:100%}
+body{min-height:100%;font-family:var(--body);background:var(--box);color:#f4f2ea}
+::selection{background:var(--amber);color:var(--ink)}
+a{color:inherit;text-decoration:none}
+
+/* ── TOP BAR ── */
+.top{height:56px;display:flex;align-items:center;gap:14px;padding:0 20px;
+  background:var(--box);border-bottom:1px solid var(--line)}
+.mark{width:13px;height:13px;border:2px solid var(--amber);position:relative;flex:none}
+.mark::after{content:'';position:absolute;inset:3px;background:var(--amber)}
+.word{font:600 15px var(--disp);letter-spacing:.06em;color:#f4f2ea}
+.word em{font-style:normal;color:var(--amber)}
+
+/* ── HERO ── */
+.hero{max-width:720px;margin:0 auto;padding:80px 28px 0}
+.hero h1{font:700 42px/1 var(--disp);color:#f4f2ea;letter-spacing:-.01em;margin-bottom:14px}
+.hero h1 em{font-style:normal;color:var(--amber)}
+.hero p{font-size:16px;line-height:1.7;color:var(--mut-l);max-width:52ch}
+
+/* ── LIST ── */
+.list{max-width:720px;margin:0 auto;padding:48px 28px 100px;display:grid;gap:16px}
+.card{display:grid;grid-template-columns:38px 1fr;gap:16px;padding:18px 22px;
+  border:1px solid var(--line);border-radius:6px;transition:.2s;background:var(--box-2)}
+.card:hover{border-color:var(--amber);box-shadow:0 0 0 1px rgba(255,178,36,.1)}
+.num{font:700 20px var(--disp);color:var(--mut);margin-top:2px}
+.card h2{font:600 17px var(--disp);color:#f4f2ea;margin-bottom:4px}
+.card .meta{font:400 11px var(--mono);letter-spacing:.12em;color:var(--mut-l)}
+.card p{font-size:14px;line-height:1.6;color:var(--mut-l);margin-top:6px}
+.card .tag{display:inline-block;font:400 9px var(--mono);letter-spacing:.12em;
+  padding:2px 8px;border-radius:3px;margin-top:8px}
+.tag.ready{background:#1a3629;color:var(--cyan)}
+.tag.locked{background:var(--line);color:var(--mut)}
+
+/* ── FOOTER ── */
+.foot{text-align:center;padding:40px 20px 60px;color:var(--mut);font:400 11px var(--mono)}
+.foot i{display:inline-block;width:5px;height:5px;background:var(--amber);margin:0 8px 0 0}
+</style>
 </head>
-<body data-mode="split">
+<body>
 
 <header class="top">
   <span class="mark"></span>
-  <span class="word">BLACKBOX<em>/</em>AGENT</span>
-  <span class="tag">конструктор агентов · изнутри</span>
-  <span class="hub-link"><a href="/blog/">все статьи →</a></span>
-  <span class="lvls" title="уровни: 0 открыт · 1–4 скоро"><i class="on"></i><i></i><i></i><i></i><i></i></span>
-  <nav class="modes" title="клавиши 1 · 2 · 3">
-    <span class="mode-ind" id="modeInd"></span>
-    <button class="mode-btn" data-mode="blog">БЛОГ</button>
-    <button class="mode-btn is-active" data-mode="split">ВМЕСТЕ</button>
-    <button class="mode-btn" data-mode="3d">3D</button>
-  </nav>
+  <a href="/" class="word">BLACKBOX<em>/</em>AGENT</a>
 </header>
 
-<main>
-  <section class="blog" id="blog">
-    <div class="wrap">
+<section class="hero">
+  <h1>Конструктор<br>агентов <em>изнутри</em></h1>
+  <p>Интерактивный блог про то, как устроены ИИ-агенты. Каждая статья — уровень: теория слева, 3D-сцена справа.</p>
+</section>
 
-      <header class="open">
-        <p class="kicker">Уровень 0 · Чёрный ящик</p>
-        <div class="term">
-          <span class="tl">BLACKBOX // LIVE TAIL</span>
-          <div><i>→</i>POST /v1/chat/completions</div>
-          <div><i>→</i>{"role":"user","content":"Привет. Ты кто?"}</div>
-          <div class="out"><i>←</i>200 OK · 14 ms</div>
-          <div class="out"><i>←</i>{"role":"assistant","content":"Не знаю. Здесь темно. Зато что-то мигает."}<span class="cur">▍</span></div>
-        </div>
-        <h1>Снаружи —<br>только чат</h1>
-        <p class="lead">Любой ИИ-агент — от простейшего бота до автономной системы — начинается с одного и того же: запрос улетает в темноту, и оттуда возвращается ответ. Разберём этот «ящик» — а заодно побудем внутри него.</p>
-      </header>
-
-      <section class="sec reveal" data-scene="room">
-        <span class="num">01</span>
-        <p class="kicker">01 · Интерфейс</p>
-        <h2>Коробка с двумя отверстиями</h2>
-        <p>Если смотреть на агента снаружи, видно на удивление мало. Ни памяти, ни плана, ни характера — только два отверстия: одно принимает запрос, другое возвращает ответ. Этот интерфейс называется <b>chat completions API</b>, и через него сегодня разговаривает с моделями почти всё.</p>
-        <p>С этого начинают все конструкторы агентов: LangChain, OpenAI Assistants, Claude Agent SDK — под капотом любого из них лежит один и тот же обмен «сообщение → сообщение».</p>
-        <div class="link"><b>↗ СВЯЗЬ СО СЦЕНОЙ</b>Комната вокруг тебя — этот самый ящик. Янтарная щель слева — вход (request), голубой лоток справа — выход (response). Осмотрись: здесь больше ничего нет. Пока.</div>
-      </section>
-
-      <section class="sec reveal" data-scene="slot">
-        <span class="num">02</span>
-        <p class="kicker">02 · Протокол</p>
-        <h2>Анатомия запроса</h2>
-        <p>Всё, что «знает» коробка, — массив <code>messages</code>. У каждого сообщения есть роль:</p>
-        <div class="roles">
-          <div class="role"><code>system</code><span>Скрытая инструкция: кто ты и как себя вести. Пользователь её не видит.</span></div>
-          <div class="role"><code>user</code><span>То, что прилетело снаружи. Капсула в щели — это оно и есть.</span></div>
-          <div class="role"><code>assistant</code><span>Ответ коробки. Всё, что она «сказала» за свою жизнь.</span></div>
-        </div>
-        <div class="code">
-          <div class="code-h"><i></i><i></i><i></i><span>request.json</span></div>
-<pre>{
-  <span class="k">"model"</span>: <span class="s">"gpt-4o-mini"</span>,
-  <span class="k">"messages"</span>: [
-    { <span class="k">"role"</span>: <span class="u">"system"</span>, <span class="k">"content"</span>: <span class="s">"Отвечай кратко."</span> },
-    { <span class="k">"role"</span>: <span class="u">"user"</span>,   <span class="k">"content"</span>: <span class="s">"Сколько будет 7 × 8?"</span> }
-  ],
-  <span class="k">"max_tokens"</span>: <span class="v">64</span>
-}</pre>
-        </div>
-        <div class="code">
-          <div class="code-h"><i></i><i></i><i></i><span>response.json</span></div>
-<pre>{
-  <span class="k">"choices"</span>: [{
-    <span class="k">"message"</span>: { <span class="k">"role"</span>: <span class="u">"assistant"</span>, <span class="k">"content"</span>: <span class="s">"56"</span> }
-  }],
-  <span class="k">"usage"</span>: { <span class="k">"prompt_tokens"</span>: <span class="v">21</span>, <span class="k">"completion_tokens"</span>: <span class="v">2</span> }
-}</pre>
-        </div>
-        <p>Поле <code>usage</code> — счёт из коробки: сколько токенов сожгли. О токенах — следующая глава.</p>
-        <div class="link"><b>↗ СВЯЗЬ СО СЦЕНОЙ</b>Наведи прицел на капсулу — она покажет поле <code>content</code> входящего сообщения. Выстрел по лотку — отправить ответ.</div>
-      </section>
-
-      <section class="sec reveal" data-scene="token">
-        <span class="num">03</span>
-        <p class="kicker">03 · Валюта</p>
-        <h2>Токены — валюта коробки</h2>
-        <p>Коробка не читает слова — она читает <b>токены</b>: кусочки слов длиной в пару-тройку букв. По-английски один токен ≈ ¾ слова; по-русски дороже — слово часто распадается на два-три токена.</p>
-        <p>Всё, что влезает в коробку за один раз, называется <b>контекстным окном</b>. Это её единственная память: инструкция, запрос и весь разговор. Что не поместилось — не существует. Совсем.</p>
-        <div class="link"><b>↗ СВЯЗЬ СО СЦЕНОЙ</b>Твой боезапас — токены контекста: −1 за выстрел, +48 за отправленный ответ, немного капает само. Следи за шкалой слева внизу.</div>
-      </section>
-
-      <section class="sec reveal" data-scene="tray">
-        <span class="num">04</span>
-        <p class="kicker">04 · Граница</p>
-        <h2>Почему это ещё не агент</h2>
-        <p>Chat completion — это один вдох: запрос → ответ. Коробка не умеет переспросить, не помнит тебя через пять минут и не вызовет калькулятор, даже если от этого зависит её жизнь. Честно говоря, она вообще не знает, что у неё есть лоток.</p>
-        <p>Агент начинается там, где ответ перестаёт быть концом и становится <b>шагом</b>. Для этого коробке понадобятся:</p>
-        <ul class="next">
-          <li><i class="sq a"></i><div><b>Цикл</b> — observe → think → act, пока задача не решена. <span>УРОВЕНЬ 1</span></div></li>
-          <li><i class="sq c"></i><div><b>Инструменты</b> — function calling: коробка дёргает внешний мир. <span>УРОВЕНЬ 2</span></div></li>
-          <li><i class="sq w"></i><div><b>Память</b> — всё, что не влезло в контекстное окно. <span>УРОВЕНЬ 3</span></div></li>
-        </ul>
-        <p>А на последнем уровне ты соберёшь агента сам — из этих деталей, как из конструктора.</p>
-      </section>
-
-      <footer class="gate reveal" id="gate0">
-        <div><span class="g-k">УРОВЕНЬ 1</span><span class="g-t">Цикл агента</span></div>
-        <span class="g-lock"><span class="when-locked">🔒 реши 3 задачи</span><span class="when-open">✓ открыт</span></span>
-      </footer>
-
-      <div id="level1">
-        <section class="sec reveal" data-scene="walls">
-          <span class="num">05</span>
-          <p class="kicker">05 · Прозрение</p>
-          <h2>Один вдох — не дыхание</h2>
-          <p>На уровне 0 коробка была честна: запрос — ответ, один выстрел. Но термометр, который один раз ответил «22 градуса», никто не называет агентом.</p>
-          <p><b>Агент — это система, которая добивается цели в цикле</b>: действует, смотрит на результат, поправляет себя. Ключевое отличие — не интеллект, а петля.</p>
-          <div class="link"><b>↗ СВЯЗЬ СО СЦЕНОЙ</b>Стены растворились: ты больше не в глухом ящике. Под ногами — сетка внешнего мира, в котором агент действует. Прокрути главу — рёбра каркаса подсветятся.</div>
-        </section>
-
-        <section class="sec reveal" data-scene="ring">
-          <span class="num">06</span>
-          <p class="kicker">06 · Механика</p>
-          <h2>Петля: наблюдай → думай → действуй</h2>
-          <p>Внутри любого агента крутятся три фазы. <b>Наблюдай</b> — собери состояние мира. <b>Думай</b> — выбери действие. <b>Действуй</b> — измени мир. И снова по кругу.</p>
-          <p>На этой тройке держится всё: ReAct, агентные циклы в LangGraph, игровые ИИ, автопилоты, пишущие код. Различаются только станции — кольцо одно и то же.</p>
-          <div class="link"><b>↗ СВЯЗЬ СО СЦЕНОЙ</b>Кольцо в центре комнаты — это и есть цикл. Янтарный узел — текущая фаза: стреляй по узлам в порядке НАБЛЮДАЙ → ДУМАЙ → ДЕЙСТВУЙ. Промах по фазе — сожжённый впустую контекст.</div>
-        </section>
-
-        <section class="sec reveal" data-scene="steps">
-          <span class="num">07</span>
-          <p class="kicker">07 · Итерации</p>
-          <h2>Шаг, ещё шаг</h2>
-          <p>Одной тройки почти никогда не хватает. «Найди, где кофе дешевле»: наблюдал (цены) → думал (сравнил) → действовал (промежуточный вывод) → снова наблюдал (перепроверил) → …</p>
-          <p>Каждый виток стоит токенов — шкала слева внизу на этом уровне тает заметно быстрее. Работа агента стоит реальных денег, и валюта всё та же.</p>
-          <div class="link"><b>↗ СВЯЗЬ СО СЦЕНОЙ</b>Плашка «ШАГ 1/2» сверху — итерации задачи. После финального ДЕЙСТВУЙ капсула сама полетит в лоток.</div>
-        </section>
-
-        <section class="sec reveal" data-scene="entropy">
-          <span class="num">08</span>
-          <p class="kicker">08 · Границы</p>
-          <h2>Когда остановиться</h2>
-          <p>Петля без условия остановки — белка в колесе: двадцать одинаковых «подумал», цель поплыла, бюджет сгорел. На практике агента ограничивают: <code>max_iterations</code>, бюджет токенов, таймаут, критерий «цель достигнута».</p>
-          <p>Твоя шкала боезапаса — тоже бюджет. А кольцо, замедляющееся, когда ты стоишь, — это агент ждёт твоего действия, а не медитирует.</p>
-          <p>Не ясно одно: чем коробка действует? Пока из лотка вылетают только слова. На уровне 2 появятся инструменты — function calling.</p>
-          <div class="link"><b>↗ СВЯЗЬ СО СЦЕНОЙ</b>Замри на пять секунд — цикл замедлится. Выстрел по фазе снова его разгонит.</div>
-        </section>
-
-        <footer class="gate reveal">
-          <div><span class="g-k">УРОВЕНЬ 2</span><span class="g-t">Инструменты</span></div>
-          <span class="g-lock">🔒 скоро</span>
-        </footer>
-      </div>
-
+<section class="list">
+  <a class="card" href="level.html">
+    <span class="num">0</span>
+    <div>
+      <h2>Чёрный ящик</h2>
+      <span class="meta">Chat completion · токены · контекстное окно</span>
+      <p>Снаружи агента нет ничего, кроме одного запроса и одного ответа. LEVEL 0 — ты внутри.</p>
+      <span class="tag ready">● открыто</span>
     </div>
-  </section>
+  </a>
 
-  <section class="stage" id="stage">
-    <canvas id="gl"></canvas>
-    <div class="cross" id="cross"><i></i><i></i><i></i><i></i></div>
-    <div class="readout" id="readout"><b>ВХОДЯЩЕЕ</b><span id="readoutText"></span></div>
-    <div class="hint" id="hint">ПРИЦЕЛЬСЯ В КАПСУЛУ — ПРОЧТЁШЬ · ВЫСТРЕЛ В ЛОТОК — ОТПРАВИТЬ ОТВЕТ</div>
-    <div class="phase" id="phase">
-      <span class="p-k">ФАЗА ЦИКЛА</span>
-      <b id="phaseName">—</b>
-      <span class="pips" id="pips"></span>
+  <a class="card" href="level.html">
+    <span class="num">1</span>
+    <div>
+      <h2>Цикл агента</h2>
+      <span class="meta">Observe → think → act</span>
+      <p>Чат — это вдох. Агент — это дыхание.</p>
+      <span class="tag ready">● открыто</span>
     </div>
-    <div class="lvl" id="lvlTag">УР.0 — ЧЁРНЫЙ ЯЩИК</div>
-    <div class="tokens">
-      <span class="t-l">КОНТЕКСТ</span>
-      <div class="t-bar"><i id="tokFill"></i></div>
-      <span class="t-v" id="tokVal">96 / 96</span>
-    </div>
-    <div class="score"><b id="score">0</b><span>ОТВЕТОВ</span></div>
-    <div class="toast" id="toast"></div>
-    <div class="overlay" id="overlay">
-      <div class="ov-box">
-        <h3 id="ovTitle"><i class="pulse"></i>ВОЙТИ В ЯЩИК</h3>
-        <p id="ovKeys"><kbd>WASD</kbd> движение · <kbd>МЫШЬ</kbd> обзор · <kbd>ЛКМ</kbd> выстрел токеном · <kbd>ESC</kbd> выйти</p>
-        <p class="ov-sub">ТЫ — ВНУТРИ. ОТ ПЕРВОГО ЛИЦА.</p>
-      </div>
-    </div>
-  </section>
-</main>
+  </a>
 
-<script type="module" src="./src/main.js"></script>
+  <div class="card" style="opacity:.45;pointer-events:none">
+    <span class="num">2</span>
+    <div>
+      <h2>Инструменты</h2>
+      <span class="meta">Function calling · внешние API</span>
+      <p>Коробка учится дёргать внешний мир.</p>
+      <span class="tag locked">● скоро</span>
+    </div>
+  </div>
+
+  <div class="card" style="opacity:.45;pointer-events:none">
+    <span class="num">3</span>
+    <div>
+      <h2>Память</h2>
+      <span class="meta">RAG · контекстное окно · долгая память</span>
+      <p>Что не влезло — не существует. Пока.</p>
+      <span class="tag locked">● скоро</span>
+    </div>
+  </div>
+
+  <div class="card" style="opacity:.45;pointer-events:none">
+    <span class="num">4</span>
+    <div>
+      <h2>Конструктор</h2>
+      <span class="meta">Сборка агента</span>
+      <p>Собери своего агента из деталей и запусти.</p>
+      <span class="tag locked">● скоро</span>
+    </div>
+  </div>
+</section>
+
+<footer class="foot"><i></i> 2026 · уровни 0–4</footer>
+
 </body>
 </html>

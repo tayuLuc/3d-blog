@@ -7,7 +7,7 @@ export default defineConfig({
   css: { transformer: 'lightningcss' },
   build: {
     cssMinify: 'lightningcss',
-    rollupOptions: { output: { manualChunks(id) { if (id.includes('node_modules/three/')) return 'three'; } } },
+    rollupOptions: { input: 'level.html', output: { manualChunks(id) { if (id.includes('node_modules/three/')) return 'three'; } } },
   },
   server: { host: true },
   plugins: [
