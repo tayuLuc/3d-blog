@@ -1,0 +1,10 @@
+:root{
+  --ink:#171a1f; --paper:#f1efe7; --paper-2:#e7e4d8;
+  --box:#0d0f13; --box-2:#14171d; --line:#262b33;
+  --amber:#ffb224; --amber-d:#b06a00; --cyan:#4dd8c7;
+  --mut:#6b7480; --mut-l:#8b93a0;
+  --disp:'Tektur',sans-serif; --body:'Golos Text',sans-serif; --mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+::selection{background:var(--amber);color:var(--ink)}
+@keyframes blink{50%{opacity:.25}}

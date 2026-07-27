@@ -1,0 +1,24 @@
+html{height:100%}
+body{min-height:100%;font-family:var(--body);background:var(--box);color:#f4f2ea}
+
+.hero{max-width:720px;margin:0 auto;padding:80px 28px 0}
+.hero h1{font:700 42px/1 var(--disp);letter-spacing:-.01em;margin-bottom:14px}
+.hero h1 em{font-style:normal;color:var(--amber)}
+.hero p{font-size:16px;line-height:1.7;color:var(--mut-l);max-width:52ch}
+
+.list{max-width:720px;margin:0 auto;padding:48px 28px 100px;display:grid;gap:16px}
+.card{display:grid;grid-template-columns:38px 1fr;gap:16px;padding:18px 22px;
+  border:1px solid var(--line);border-radius:6px;background:var(--box-2);transition:.2s}
+.card.ready:hover{border-color:var(--amber);box-shadow:0 0 0 1px rgba(255,178,36,.1)}
+.card.locked{opacity:.45;pointer-events:none}
+.card .num{font:700 20px var(--disp);color:var(--mut);margin-top:2px}
+.card h2{font:600 17px var(--disp);margin-bottom:4px}
+.card .meta{font:400 11px var(--mono);letter-spacing:.12em;color:var(--mut-l)}
+.card p{font-size:14px;line-height:1.6;color:var(--mut-l);margin-top:6px}
+.badge{display:inline-block;font:400 9px var(--mono);letter-spacing:.12em;
+  padding:2px 8px;border-radius:3px;margin-top:8px}
+.badge.ready{background:#1a3629;color:var(--cyan)}
+.badge.locked{background:var(--line);color:var(--mut)}
+
+.foot{text-align:center;padding:40px 20px 60px;color:var(--mut);font:400 11px var(--mono)}
+.foot i{display:inline-block;width:5px;height:5px;background:var(--amber);margin-right:8px}

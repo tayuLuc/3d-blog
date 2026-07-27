@@ -7,6 +7,8 @@ import '@fontsource/golos-text/600.css';
 import '@fontsource/jetbrains-mono/400.css';
 import '@fontsource/jetbrains-mono/600.css';
 
+import './styles/tokens.css';
+import './styles/chrome.css';
 import './styles/base.css';
 import './styles/blog.css';
 import './styles/stage.css';
