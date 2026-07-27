@@ -9,6 +9,7 @@ const CFG = {
   dropTime: 1.3,
   solveTime: .65,
   aimScale: 1.08,
+  demoSolve: 1.8,
 };
 
 const TASKS_L0 = [
@@ -30,9 +31,17 @@ const TASKS_L1 = [
 export function createCapsule({ scene, anchors, getLevel }) {
   const { SLOT, HOVER, TRAY } = anchors;
   let capsule = null, spawnIn = CFG.firstDelay, taskIdx = 0, aimed = false;
+  let activeFlag = true, demo = false, demoT = 0;
 
   bus.on('cycle:done', trySolve);
   bus.on('aim:change', ({ hit }) => { aimed = hit; });
+
+  function setActive(v) {
+    activeFlag = v;
+    if (!v && capsule) { scene.remove(capsule.g); capsule = null; }
+    if (v && !capsule) spawnIn = CFG.firstDelay;
+  }
+  function setDemo(v) { demo = v; demoT = 0; }
 
   function spawn() {
     const pool = getLevel() >= 1 ? TASKS_L1 : TASKS_L0;
@@ -52,6 +61,7 @@ export function createCapsule({ scene, anchors, getLevel }) {
   }
 
   function update(dt, t) {
+    if (!activeFlag) return;
     if (!capsule) {
       spawnIn -= dt;
       if (spawnIn <= 0) spawn();
@@ -70,6 +80,10 @@ export function createCapsule({ scene, anchors, getLevel }) {
       const s = aimed ? CFG.aimScale : 1;
       c.g.scale.x += (s - c.g.scale.x) * Math.min(1, dt * 10);
       c.g.scale.y = c.g.scale.x;
+      if (demo) {
+        demoT += dt;
+        if (demoT > CFG.demoSolve) { demoT = 0; trySolve(); }
+      }
     } else if (c.state === 'solve') {
       c.t += dt / CFG.solveTime;
       const e = easeIn(clamp(c.t, 0, 1));
@@ -96,8 +110,7 @@ export function createCapsule({ scene, anchors, getLevel }) {
   }
 
   return {
-    update,
-    trySolve,
+    update, trySolve, setActive, setDemo,
     aimMesh: () => (capsule && capsule.state === 'idle') ? capsule.front : null,
     question: () => (capsule ? capsule.q : ''),
   };

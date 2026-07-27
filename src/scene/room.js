@@ -13,14 +13,12 @@ const LAYOUT = {
   },
   trayHit: { x: 2.2, y: 1.15, halfX: .85, halfY: .62, z: -5.7 },
 };
-
 const CFG = {
   dustCount: 240,
   openDuration: 1.4,
   hlLerp: 5,
   trayPulse: { glow: 2.5, decay: 3, lightBoost: 40 },
 };
-
 const v3 = a => new THREE.Vector3(...a);
 
 export function createRoom(scene) {
@@ -41,8 +39,8 @@ export function createRoom(scene) {
   scene.add(outerGrid);
 
   const stripMat = new THREE.MeshStandardMaterial({ color: '#0b0d10', emissive: '#39424e', emissiveIntensity: .55 });
-  [[9.6,.05,.05, 0,3.55,-5.92], [9.6,.05,.05, 0,3.55,5.92],
-   [.05,.05,11.7, -4.92,3.55,0], [.05,.05,11.7, 4.92,3.55,0]]
+  [[9.6,.05,.05, 0,3.55,-5.92],[9.6,.05,.05, 0,3.55,5.92],
+   [.05,.05,11.7, -4.92,3.55,0],[.05,.05,11.7, 4.92,3.55,0]]
   .forEach(([w, h, d, px, py, pz]) => {
     const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), stripMat);
     m.position.set(px, py, pz);
@@ -50,7 +48,6 @@ export function createRoom(scene) {
   });
 
   const { slot, tray } = LAYOUT;
-
   const slotSlitMat = new THREE.MeshStandardMaterial({ color: '#241703', emissive: '#ffb224', emissiveIntensity: 1.3 });
   const slotFrame = new THREE.Mesh(new THREE.BoxGeometry(1.7, 1.05, .12),
     new THREE.MeshStandardMaterial({ color: '#0a0c0f', roughness: .9 }));
@@ -84,14 +81,12 @@ export function createRoom(scene) {
 
   const dp = new Float32Array(CFG.dustCount * 3);
   for (let i = 0; i < CFG.dustCount; i++) {
-    dp[i*3]   = (Math.random()*2 - 1) * 4.7;
-    dp[i*3+1] = .2 + Math.random() * 4;
-    dp[i*3+2] = (Math.random()*2 - 1) * 5.6;
+    dp[i*3]=(Math.random()*2-1)*4.7;dp[i*3+1]=.2+Math.random()*4;dp[i*3+2]=(Math.random()*2-1)*5.6;
   }
   const dustGeo = new THREE.BufferGeometry();
   dustGeo.setAttribute('position', new THREE.BufferAttribute(dp, 3));
   const dust = new THREE.Points(dustGeo,
-    new THREE.PointsMaterial({ color: '#8b96a5', size: .02, transparent: true, opacity: .5, depthWrite: false }));
+    new THREE.PointsMaterial({ color: '#8b96a5', size:.02, transparent:true, opacity:.5, depthWrite:false }));
   scene.add(dust);
 
   const HL = {
@@ -104,30 +99,24 @@ export function createRoom(scene) {
   const cFrom = new THREE.Color('#ffffff'), cTo = new THREE.Color('#59616c');
 
   return {
-    anchors: {
-      SLOT:  v3(LAYOUT.capsule.spawn),
-      HOVER: v3(LAYOUT.capsule.hover),
-      TRAY:  v3(LAYOUT.capsule.solve),
-    },
+    anchors: { SLOT: v3(LAYOUT.capsule.spawn), HOVER: v3(LAYOUT.capsule.hover), TRAY: v3(LAYOUT.capsule.solve) },
     trayArea: LAYOUT.trayHit,
     register(key, mat, base) { HL[key] = { mats: [mat], base }; },
     pulseTray(i = 1) { trayPulse = Math.max(trayPulse, i); },
-    openWalls() { opened = true; },
+    setOpen(v) { opened = v; },
     update(dt, t, active) {
       const glow = Math.sin(t * 3.6) * .5 + .5;
       for (const k in HL) {
         const h = HL[k], target = h.base + (k === active ? glow * 1.8 : 0);
         h.mats.forEach(m => m.emissiveIntensity += (target - m.emissiveIntensity) * Math.min(1, dt * 7));
       }
-      if (opened && openT < 1) {
-        openT = Math.min(1, openT + dt / CFG.openDuration);
-        const e = easeOut(openT);
-        shellMat.transparent = true;
-        shellMat.opacity = 1 - e * .88;
-        shellMat.color.lerpColors(cFrom, cTo, e);
-        scene.fog.far = 26 + e * 44;
-      }
+      if (opened  && openT < 1) openT = Math.min(1, openT + dt / CFG.openDuration);
+      if (!opened && openT > 0) openT = Math.max(0, openT - dt / CFG.openDuration);
       const e = easeOut(openT);
+      shellMat.transparent = e > 0;
+      shellMat.opacity = 1 - e * .88;
+      shellMat.color.lerpColors(cFrom, cTo, e);
+      scene.fog.far = 26 + e * 44;
       hlWalls   += ((active === 'walls'   ? 1 : 0) - hlWalls)   * Math.min(1, dt * CFG.hlLerp);
       hlEntropy += ((active === 'entropy' ? 1 : 0) - hlEntropy) * Math.min(1, dt * CFG.hlLerp);
       edgeMat.opacity            = e * (.75 + hlWalls * glow * .6);

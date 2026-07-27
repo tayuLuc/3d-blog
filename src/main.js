@@ -15,6 +15,7 @@ import { bus } from './core/bus.js';
 import { initModes } from './modes.js';
 import { createHud } from './hud.js';
 import { createOverlay } from './ui/overlay.js';
+import { createDirector } from './director.js';
 import { economy } from './game/economy.js';
 import { initBlog } from './blog/blog.js';
 import { createEngine } from './scene/engine.js';
@@ -24,10 +25,13 @@ import { createCapsule } from './scene/capsule.js';
 import { createLoop } from './scene/loop.js';
 import { createProgress } from './level.js';
 
+let mode = 'split';
+let activeHL = 'room';
+
 const engine   = createEngine(document.getElementById('gl'), document.getElementById('stage'));
 const room     = createRoom(engine.scene);
 const loop     = createLoop({ scene: engine.scene, camera: engine.camera });
-const progress = createProgress({ room, loop });
+const progress = createProgress();
 const capsule  = createCapsule({ scene: engine.scene, anchors: room.anchors, getLevel: progress.get });
 const player   = createPlayer({
   scene: engine.scene,
@@ -37,13 +41,14 @@ const player   = createPlayer({
   worldHit: p => loop.hitTest(p),
   getAimMesh: () => capsule.aimMesh(),
 });
+const director = createDirector({ room, loop, capsule, camera: engine.camera, progress });
 room.register('token', player.tipMat, 1);
 
 createHud();
 createOverlay({ isVisible: engine.isVisible });
 
 bus.on('task:spawn', ({ task }) => {
-  if (progress.get() >= 1) loop.startTask(task.steps || 1);
+  if (mode === '3d' && progress.get() >= 1) loop.startTask(task.steps || 1);
 });
 bus.on('task:solved', ({ answer }) => {
   economy.reward();
@@ -64,17 +69,26 @@ bus.on('aim:change', ({ hit }) => {
   bus.emit('readout', hit ? { text: capsule.question() } : null);
 });
 
-let activeHL = 'room';
 initModes(m => {
+  mode = m;
   engine.setVisible(m !== 'blog');
-  if (m === 'blog') player.unlock();
+  if (m !== '3d') player.unlock();
+  director.setMode(m);
+  bus.emit('mode:change', { mode: m });
 });
-initBlog(key => { activeHL = key; });
+initBlog(key => {
+  activeHL = key;
+  director.setSection(key);
+});
+
+director.apply();
+bus.emit('mode:change', { mode });
 
 engine.onFrame((dt, t) => {
   economy.tick(dt);
-  player.update(dt, t);
+  if (mode === '3d') player.update(dt, t);
   capsule.update(dt, t);
   loop.update(dt, t, activeHL);
   room.update(dt, t, activeHL);
+  director.update(dt, t);
 });

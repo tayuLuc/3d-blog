@@ -6,10 +6,9 @@ import { bus } from '../core/bus.js';
 const CFG = {
   radius: 2.3,
   hitRadius: .42,
-  enterScale: .6,
-  scaleIn: .8,
   pulseTime: .45,
   spin: { idle: .12, active: .3, waiting: .07, waitDelay: 5 },
+  demo: { phaseEvery: 1.4, restartAfter: 1.2, steps: 2 },
 };
 
 const PHASES = [
@@ -21,6 +20,7 @@ const PHASES = [
 export function createLoop({ scene, camera }) {
   const group = new THREE.Group();
   group.position.set(0, 1.7, -1.0);
+  group.scale.setScalar(0);
   group.visible = false;
   scene.add(group);
 
@@ -49,8 +49,10 @@ export function createLoop({ scene, camera }) {
   pulse.visible = false;
   group.add(pulse);
 
-  let shown = false, spin = 0, speed = CFG.spin.idle;
+  let shownTarget = false, demo = false;
+  let spin = 0, speed = CFG.spin.idle;
   let phase = 0, stepsDone = 0, taskSteps = 0, active = false, idle = 0;
+  let demoT = 0, demoGap = 0;
   let pulseAnim = null;
   const fizzle = [0, 0, 0];
   let hlRing = 0, hlSteps = 0;
@@ -58,11 +60,13 @@ export function createLoop({ scene, camera }) {
 
   const angle = i => spin + i * (Math.PI * 2 / 3);
 
-  function show() {
-    if (shown) return;
-    shown = true;
-    group.visible = true;
-    group.scale.setScalar(CFG.enterScale);
+  function show() { shownTarget = true; }
+  function hide() { shownTarget = false; }
+
+  function setDemo(v) {
+    demo = v;
+    demoT = 0; demoGap = 0;
+    if (!v) { active = false; bus.emit('phase:change', null); }
   }
 
   function publishPhase() {
@@ -73,12 +77,12 @@ export function createLoop({ scene, camera }) {
   }
 
   function startTask(steps) {
-    taskSteps = steps; stepsDone = 0; phase = 0; active = true; idle = 0;
+    taskSteps = steps; stepsDone = 0; phase = 0; active = true; idle = 0; demoT = 0;
     publishPhase();
   }
 
   function hitTest(p) {
-    if (!shown || !active) return false;
+    if (!shownTarget || !active || demo) return false;
     const local = group.worldToLocal(p.clone());
     for (let i = 0; i < 3; i++) {
       if (local.distanceTo(nodes[i].g.position) < CFG.hitRadius) { onNode(i); return true; }
@@ -117,8 +121,12 @@ export function createLoop({ scene, camera }) {
   }
 
   function update(dt, t, activeHL) {
-    if (!shown) return;
-    if (group.scale.x < 1) group.scale.setScalar(Math.min(1, group.scale.x + dt * CFG.scaleIn));
+    if (shownTarget || group.visible) {
+      const s = group.scale.x + ((shownTarget ? 1 : 0) - group.scale.x) * Math.min(1, dt * 2.5);
+      group.scale.setScalar(s);
+      group.visible = s > .02;
+      if (!group.visible) return;
+    } else return;
 
     hlRing  += ((activeHL === 'ring'  ? 1 : 0) - hlRing)  * Math.min(1, dt * 5);
     hlSteps += ((activeHL === 'steps' ? 1 : 0) - hlSteps) * Math.min(1, dt * 5);
@@ -154,10 +162,19 @@ export function createLoop({ scene, camera }) {
     });
 
     ringMat.emissiveIntensity = .5 + (active ? .25 + Math.sin(t * 2) * .1 : 0) + hlRing * glow * 1.3;
-    const assembled = (group.scale.x - CFG.enterScale) / (1 - CFG.enterScale);
-    loopLight.intensity = assembled * (6 + hlRing * 12);
+    loopLight.intensity = group.scale.x * (6 + hlRing * 12);
     updatePulse(dt);
+
+    if (demo) {
+      if (!active) {
+        demoGap += dt;
+        if (demoGap > CFG.demo.restartAfter) { demoGap = 0; startTask(CFG.demo.steps); }
+      } else {
+        demoT += dt;
+        if (demoT > CFG.demo.phaseEvery) { demoT = 0; onNode(phase); }
+      }
+    }
   }
 
-  return { show, update, hitTest, startTask, isActive: () => active };
+  return { show, hide, setDemo, update, hitTest, startTask, isActive: () => active };
 }
