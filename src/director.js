@@ -39,6 +39,8 @@ export function createDirector({ room, loop, capsule, camera, progress }) {
       camera.lookAt(...SPAWN.look);
       cur.pos.copy(camera.position);
       cur.look.set(...SPAWN.look);
+      loop.reset();
+      capsule.setActive(false);
     } else {
       cur.pos.copy(camera.position);
       camera.getWorldDirection(tLook);

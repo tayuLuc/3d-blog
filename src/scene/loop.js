@@ -109,5 +109,7 @@ export function createLoop({ scene, camera }) {
     }
   }
 
-  return { show, hide, setDemo, update, activeNode, idleNodes, advance, doFizzle, fizzle: doFizzle, startTask, isActive };
+  function reset() { shownTarget = false; demo = false; active = false; nodeCharge = 0; bus.emit('phase:change', null); }
+
+  return { show, hide, setDemo, reset, update, activeNode, idleNodes, advance, doFizzle, fizzle: doFizzle, startTask, isActive };
 }

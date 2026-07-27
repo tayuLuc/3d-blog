@@ -56,7 +56,7 @@ export function createRoom(scene) {
   const dustGeo = new THREE.BufferGeometry(); dustGeo.setAttribute('position',new THREE.BufferAttribute(dp,3));
   const dust = new THREE.Points(dustGeo,new THREE.PointsMaterial({color:'#8b96a5',size:.02,transparent:true,opacity:.5,depthWrite:false})); scene.add(dust);
 
-  const HL = { room:{mats:[stripMat],base:.55}, slot:{mats:[slotSlitMat],base:1.3}, tray:{mats:[trayGlowMat],base:.85} };
+  const HL = { room:{mats:[stripMat],base:.55}, token:{mats:[stripMat],base:.55}, slot:{mats:[slotSlitMat],base:1.3}, tray:{mats:[trayGlowMat],base:.85} };
   let trayPulse = 0, trayCharge = 0;
   let opened = false, openT = 0, hlWalls = 0, hlEntropy = 0;
   const cFrom = new THREE.Color('#ffffff'), cTo = new THREE.Color('#59616c');

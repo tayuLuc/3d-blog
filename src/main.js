@@ -38,7 +38,6 @@ const progress = createProgress();
 const capsule  = createCapsule({ scene: engine.scene, anchors: room.anchors, getLevel: progress.get });
 const player   = createPlayer({ scene: engine.scene, camera: engine.camera, dom: engine.renderer.domElement });
 const director = createDirector({ room, loop, capsule, camera: engine.camera, progress });
-room.register('token', player.tipMat, 1);
 
 createHud();
 createOverlay({ isVisible: engine.isVisible });
