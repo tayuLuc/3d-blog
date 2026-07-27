@@ -68,3 +68,9 @@ h2{font:600 clamp(24px,3.2vw,34px)/1.1 var(--disp);color:var(--ink);margin-botto
 
 .reveal{opacity:0;transform:translateY(18px);transition:opacity .6s,transform .6s}
 .reveal.in{opacity:1;transform:none}
+
+#level1:not(.unlocked) .sec,#level1:not(.unlocked) .gate{display:none}
+.gate .when-open{display:none}
+.gate.open{border-style:solid;border-color:var(--cyan);background:rgba(77,216,199,.06)}
+.gate.open .when-locked{display:none}
+.gate.open .when-open{display:inline;color:#2a8f83}

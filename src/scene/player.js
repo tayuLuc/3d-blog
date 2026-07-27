@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 import { clamp } from '../utils.js';
 
-export function createPlayer({ scene, camera, dom, hud, tray, onTrayHit, getAimMesh, onAim, isVisible }) {
+export function createPlayer({ scene, camera, dom, hud, tray, onTrayHit, getAimMesh, onAim, isVisible, worldHit }) {
   const controls = new PointerLockControls(camera, dom);
 
   const gun = new THREE.Group();
@@ -98,7 +98,8 @@ export function createPlayer({ scene, camera, dom, hud, tray, onTrayHit, getAimM
       s.life -= dt;
       const p = s.m.position;
       let dead = s.life <= 0;
-      if (p.z <= tray.z) {
+      if (!dead && worldHit && worldHit(p)) dead = true;
+      if (!dead && p.z <= tray.z) {
         dead = true;
         const direct = Math.abs(p.x - tray.x) < tray.halfX && Math.abs(p.y - tray.y) < tray.halfY;
         onTrayHit(direct);

@@ -64,3 +64,13 @@ body.locked .cross{opacity:1}
 .ov-sub{font-size:10px!important;letter-spacing:.14em;color:var(--mut)!important}
 kbd{border:1px solid #39404b;padding:1px 6px;font:400 10px var(--mono);
   color:#c8cdd6;background:#171b21}
+
+.phase{position:absolute;top:48px;left:50%;transform:translateX(-50%);z-index:5;
+  display:grid;justify-items:center;gap:7px;opacity:0;transition:opacity .4s;pointer-events:none}
+.phase.show{opacity:1}
+.p-k{font:400 9px/1 var(--mono);letter-spacing:.3em;color:var(--mut)}
+.phase b{font:600 17px var(--disp);letter-spacing:.12em;color:#f2efe4;
+  text-shadow:0 0 14px rgba(255,178,36,.35)}
+.pips{display:flex;gap:6px}
+.pips i{width:8px;height:8px;border:1px solid #39404b;transition:background .2s,border-color .2s}
+.pips i.done{background:var(--amber);border-color:var(--amber)}

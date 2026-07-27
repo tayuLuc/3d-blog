@@ -1,7 +1,8 @@
 const $ = s => document.querySelector(s);
 const tokFill = $('#tokFill'), tokVal = $('#tokVal'), scoreEl = $('#score'),
       toastEl = $('#toast'), readoutEl = $('#readout'), readoutText = $('#readoutText'),
-      hint = $('#hint'), cross = $('#cross');
+      hint = $('#hint'), cross = $('#cross'),
+      phaseEl = $('#phase'), phaseName = $('#phaseName'), pips = $('#pips');
 
 let tokens = 96; const TMAX = 96;
 let solved = 0, lastTok = -1, toastT, dryT = 0;
@@ -46,6 +47,19 @@ export function setLocked(b) { document.body.classList.toggle('locked', b); }
 export function kickCross() {
   cross.classList.add('fire');
   setTimeout(() => cross.classList.remove('fire'), 90);
+}
+
+export function setPhase(label, color, done = 0, total = 0) {
+  if (!label) { phaseEl.classList.remove('show'); return; }
+  phaseEl.classList.add('show');
+  phaseName.textContent = label;
+  phaseName.style.color = color || '';
+  pips.innerHTML = '';
+  for (let i = 0; i < total; i++) {
+    const s = document.createElement('i');
+    if (i < done) s.className = 'done';
+    pips.appendChild(s);
+  }
 }
 
 function dryFire() {

@@ -1,13 +1,23 @@
 import * as THREE from 'three';
 import { gridTex, signTex } from './textures.js';
+import { easeOut } from '../utils.js';
 
 export function buildRoom(scene) {
-  const roomMesh = new THREE.Mesh(
-    new THREE.BoxGeometry(10, 4.5, 12),
-    new THREE.MeshStandardMaterial({ map: gridTex(), side: THREE.BackSide, roughness: .95 })
-  );
+  const shellMat = new THREE.MeshStandardMaterial({ map: gridTex(), side: THREE.BackSide, roughness: .95 });
+  const roomMesh = new THREE.Mesh(new THREE.BoxGeometry(10, 4.5, 12), shellMat);
   roomMesh.position.y = 2.25;
   scene.add(roomMesh);
+
+  const edgeMat = new THREE.LineBasicMaterial({ color: '#2e3944', transparent: true, opacity: 0 });
+  const edges = new THREE.LineSegments(new THREE.EdgesGeometry(roomMesh.geometry), edgeMat);
+  edges.position.copy(roomMesh.position);
+  scene.add(edges);
+
+  const outerGrid = new THREE.GridHelper(90, 90, '#22303a', '#141b22');
+  outerGrid.position.y = -.06;
+  outerGrid.material.transparent = true;
+  outerGrid.material.opacity = 0;
+  scene.add(outerGrid);
 
   const stripMat = new THREE.MeshStandardMaterial({ color: '#0b0d10', emissive: '#39424e', emissiveIntensity: .55 });
   [[9.6,.05,.05, 0,3.55,-5.92], [9.6,.05,.05, 0,3.55,5.92],
@@ -67,6 +77,8 @@ export function buildRoom(scene) {
     tray: { mats: [trayGlowMat], base: .85 },
   };
   let trayPulse = 0;
+  let opened = false, openT = 0, hlWalls = 0, hlEntropy = 0;
+  const cFrom = new THREE.Color('#ffffff'), cTo = new THREE.Color('#59616c');
 
   return {
     anchors: {
@@ -77,12 +89,26 @@ export function buildRoom(scene) {
     trayArea: { x: 2.2, y: 1.15, halfX: .85, halfY: .62, z: -5.7 },
     register(key, mat, base) { HL[key] = { mats: [mat], base }; },
     pulseTray(i = 1) { trayPulse = Math.max(trayPulse, i); },
+    openWalls() { opened = true; },
     update(dt, t, active) {
-      const pulse = (Math.sin(t * 3.6) * .5 + .5) * 1.8;
+      const pulse = (Math.sin(t * 3.6) * .5 + .5);
       for (const k in HL) {
-        const h = HL[k], target = h.base + (k === active ? pulse : 0);
+        const h = HL[k], target = h.base + (k === active ? pulse * 1.8 : 0);
         h.mats.forEach(m => m.emissiveIntensity += (target - m.emissiveIntensity) * Math.min(1, dt * 7));
       }
+      if (opened && openT < 1) {
+        openT = Math.min(1, openT + dt / 1.4);
+        const e = easeOut(openT);
+        shellMat.transparent = true;
+        shellMat.opacity = 1 - e * .88;
+        shellMat.color.lerpColors(cFrom, cTo, e);
+        scene.fog.far = 26 + e * 44;
+      }
+      const e = easeOut(openT);
+      hlWalls   += ((active === 'walls'   ? 1 : 0) - hlWalls)   * Math.min(1, dt * 5);
+      hlEntropy += ((active === 'entropy' ? 1 : 0) - hlEntropy) * Math.min(1, dt * 5);
+      edgeMat.opacity       = e * (.75 + hlWalls * pulse * .6);
+      outerGrid.material.opacity = e * (.45 + hlEntropy * pulse * .4);
       slotLight.intensity = 26 + Math.sin(t * 13.7) * 2 + Math.sin(t * 4.1) * 3;
       trayGlowMat.emissiveIntensity += trayPulse * 2.5;
       trayPulse = Math.max(0, trayPulse - dt * 3);

@@ -47,6 +47,19 @@ function wrapTxt(x, text, px, py, maxW, lh) {
   if (line) x.fillText(line, px, py);
 }
 
+export function nodeTex(text, color) {
+  const [c, x] = cnv(320, 120);
+  x.fillStyle = 'rgba(10,12,15,.78)'; x.fillRect(0, 0, 320, 120);
+  x.strokeStyle = color; x.lineWidth = 3; x.strokeRect(3, 3, 314, 114);
+  x.fillStyle = color;
+  x.font = '600 44px "Tektur", sans-serif';
+  x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.fillText(text, 160, 62);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
 export function labelTex(text) {
   const [c, x] = cnv(640, 400);
   x.fillStyle = '#f2efe4'; x.fillRect(0, 0, 640, 400);

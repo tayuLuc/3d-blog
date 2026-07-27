@@ -5,12 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BLACKBOX/AGENT — как устроен ИИ-агент изнутри</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='4' y='4' width='24' height='24' fill='none' stroke='%23ffb224' stroke-width='4'/><rect x='13' y='13' width='6' height='6' fill='%23ffb224'/></svg>">
-<script type="importmap">
-{ "imports": {
-  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
-}}
-</script>
 </head>
 <body data-mode="split">
 
@@ -110,10 +104,54 @@
         <p>А на последнем уровне ты соберёшь агента сам — из этих деталей, как из конструктора.</p>
       </section>
 
-      <footer class="gate reveal">
+      <footer class="gate reveal" id="gate0">
         <div><span class="g-k">УРОВЕНЬ 1</span><span class="g-t">Цикл агента</span></div>
-        <span class="g-lock">🔒 скоро</span>
+        <span class="g-lock"><span class="when-locked">🔒 реши 3 задачи</span><span class="when-open">✓ открыт</span></span>
       </footer>
+
+      <div id="level1">
+        <section class="sec reveal" data-scene="walls">
+          <span class="num">05</span>
+          <p class="kicker">05 · Прозрение</p>
+          <h2>Один вдох — не дыхание</h2>
+          <p>На уровне 0 коробка была честна: запрос — ответ, один выстрел. Но термометр, который один раз ответил «22 градуса», никто не называет агентом.</p>
+          <p><b>Агент — это система, которая добивается цели в цикле</b>: действует, смотрит на результат, поправляет себя. Ключевое отличие — не интеллект, а петля.</p>
+          <div class="link"><b>↗ СВЯЗЬ СО СЦЕНОЙ</b>Стены растворились: ты больше не в глухом ящике. Под ногами — сетка внешнего мира, в котором агент действует. Прокрути главу — рёбра каркаса подсветятся.</div>
+        </section>
+
+        <section class="sec reveal" data-scene="ring">
+          <span class="num">06</span>
+          <p class="kicker">06 · Механика</p>
+          <h2>Петля: наблюдай → думай → действуй</h2>
+          <p>Внутри любого агента крутятся три фазы. <b>Наблюдай</b> — собери состояние мира. <b>Думай</b> — выбери действие. <b>Действуй</b> — измени мир. И снова по кругу.</p>
+          <p>На этой тройке держится всё: ReAct, агентные циклы в LangGraph, игровые ИИ, автопилоты, пишущие код. Различаются только станции — кольцо одно и то же.</p>
+          <div class="link"><b>↗ СВЯЗЬ СО СЦЕНОЙ</b>Кольцо в центре комнаты — это и есть цикл. Янтарный узел — текущая фаза: стреляй по узлам в порядке НАБЛЮДАЙ → ДУМАЙ → ДЕЙСТВУЙ. Промах по фазе — сожжённый впустую контекст.</div>
+        </section>
+
+        <section class="sec reveal" data-scene="steps">
+          <span class="num">07</span>
+          <p class="kicker">07 · Итерации</p>
+          <h2>Шаг, ещё шаг</h2>
+          <p>Одной тройки почти никогда не хватает. «Найди, где кофе дешевле»: наблюдал (цены) → думал (сравнил) → действовал (промежуточный вывод) → снова наблюдал (перепроверил) → …</p>
+          <p>Каждый виток стоит токенов — шкала слева внизу на этом уровне тает заметно быстрее. Работа агента стоит реальных денег, и валюта всё та же.</p>
+          <div class="link"><b>↗ СВЯЗЬ СО СЦЕНОЙ</b>Плашка «ШАГ 1/2» сверху — итерации задачи. После финального ДЕЙСТВУЙ капсула сама полетит в лоток.</div>
+        </section>
+
+        <section class="sec reveal" data-scene="entropy">
+          <span class="num">08</span>
+          <p class="kicker">08 · Границы</p>
+          <h2>Когда остановиться</h2>
+          <p>Петля без условия остановки — белка в колесе: двадцать одинаковых «подумал», цель поплыла, бюджет сгорел. На практике агента ограничивают: <code>max_iterations</code>, бюджет токенов, таймаут, критерий «цель достигнута».</p>
+          <p>Твоя шкала боезапаса — тоже бюджет. А кольцо, замедляющееся, когда ты стоишь, — это агент ждёт твоего действия, а не медитирует.</p>
+          <p>Не ясно одно: чем коробка действует? Пока из лотка вылетают только слова. На уровне 2 появятся инструменты — function calling.</p>
+          <div class="link"><b>↗ СВЯЗЬ СО СЦЕНОЙ</b>Замри на пять секунд — цикл замедлится. Выстрел по фазе снова его разгонит.</div>
+        </section>
+
+        <footer class="gate reveal">
+          <div><span class="g-k">УРОВЕНЬ 2</span><span class="g-t">Инструменты</span></div>
+          <span class="g-lock">🔒 скоро</span>
+        </footer>
+      </div>
 
     </div>
   </section>
@@ -123,7 +161,12 @@
     <div class="cross" id="cross"><i></i><i></i><i></i><i></i></div>
     <div class="readout" id="readout"><b>ВХОДЯЩЕЕ</b><span id="readoutText"></span></div>
     <div class="hint" id="hint">ПРИЦЕЛЬСЯ В КАПСУЛУ — ПРОЧТЁШЬ · ВЫСТРЕЛ В ЛОТОК — ОТПРАВИТЬ ОТВЕТ</div>
-    <div class="lvl">УР.0 — ЧЁРНЫЙ ЯЩИК</div>
+    <div class="phase" id="phase">
+      <span class="p-k">ФАЗА ЦИКЛА</span>
+      <b id="phaseName">—</b>
+      <span class="pips" id="pips"></span>
+    </div>
+    <div class="lvl" id="lvlTag">УР.0 — ЧЁРНЫЙ ЯЩИК</div>
     <div class="tokens">
       <span class="t-l">КОНТЕКСТ</span>
       <div class="t-bar"><i id="tokFill"></i></div>
