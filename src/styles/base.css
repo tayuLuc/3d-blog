@@ -19,6 +19,9 @@ button{font:inherit;background:none;border:none;cursor:pointer;color:inherit}
 .word{font:600 15px var(--disp);letter-spacing:.06em;color:#f4f2ea}
 .word em{font-style:normal;color:var(--amber)}
 .tag{font:400 10px var(--mono);letter-spacing:.14em;color:var(--mut)}
+.hub-link{font:400 10px var(--mono);letter-spacing:.08em;margin-left:8px}
+.hub-link a{color:var(--mut-l);transition:color .2s}
+.hub-link a:hover{color:var(--amber)}
 .lvls{display:flex;gap:6px;margin-left:8px}
 .lvls i{width:7px;height:7px;background:#2a2f37}
 .lvls i.on{background:var(--amber)}
