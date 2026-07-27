@@ -1,6 +1,4 @@
+node_modules
+dist
 .codegraph
 .omo/
-node_modules/
-_worktrees/
-*.log
-.DS_Store
