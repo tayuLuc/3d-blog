@@ -47,6 +47,22 @@ function wrapTxt(x, text, px, py, maxW, lh) {
   if (line) x.fillText(line, px, py);
 }
 
+export function labelTex(text) {
+  const [c, x] = cnv(640, 400);
+  x.fillStyle = '#f2efe4'; x.fillRect(0, 0, 640, 400);
+  x.fillStyle = '#e6e1d0'; x.fillRect(0, 0, 640, 62);
+  x.fillStyle = '#b06a00';
+  x.font = '600 24px "JetBrains Mono", monospace';
+  x.fillText('USER // ВХОДЯЩЕЕ', 22, 40);
+  x.fillStyle = '#171a1f';
+  x.font = '500 42px "Golos Text", sans-serif';
+  wrapTxt(x, text, 24, 128, 592, 54);
+  x.strokeStyle = '#171a1f'; x.lineWidth = 4; x.strokeRect(6, 6, 628, 388);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
 export function nodeTex(text, color) {
   const [c, x] = cnv(320, 120);
   x.fillStyle = 'rgba(10,12,15,.78)'; x.fillRect(0, 0, 320, 120);
@@ -60,17 +76,14 @@ export function nodeTex(text, color) {
   return t;
 }
 
-export function labelTex(text) {
-  const [c, x] = cnv(640, 400);
-  x.fillStyle = '#f2efe4'; x.fillRect(0, 0, 640, 400);
-  x.fillStyle = '#e6e1d0'; x.fillRect(0, 0, 640, 62);
-  x.fillStyle = '#b06a00';
-  x.font = '600 24px "JetBrains Mono", monospace';
-  x.fillText('USER // ВХОДЯЩЕЕ', 22, 40);
-  x.fillStyle = '#171a1f';
-  x.font = '500 42px "Golos Text", sans-serif';
-  wrapTxt(x, text, 24, 128, 592, 54);
-  x.strokeStyle = '#171a1f'; x.lineWidth = 4; x.strokeRect(6, 6, 628, 388);
+export function stampTex() {
+  const [c, x] = cnv(256, 96);
+  x.fillStyle = 'rgba(6,26,24,.85)'; x.fillRect(0, 0, 256, 96);
+  x.strokeStyle = '#4dd8c7'; x.lineWidth = 4; x.strokeRect(4, 4, 248, 88);
+  x.fillStyle = '#4dd8c7';
+  x.font = '600 34px "JetBrains Mono", monospace';
+  x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.fillText('✓ ПРОЧИТАНО', 128, 50);
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
   return t;

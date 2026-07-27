@@ -16,6 +16,7 @@ import { initModes } from './modes.js';
 import { createHud } from './hud.js';
 import { createOverlay } from './ui/overlay.js';
 import { createDirector } from './director.js';
+import { createAttention } from './game/attention.js';
 import { economy } from './game/economy.js';
 import { initBlog } from './blog/blog.js';
 import { createEngine } from './scene/engine.js';
@@ -28,25 +29,47 @@ import { createProgress } from './level.js';
 let mode = 'split';
 let activeHL = 'room';
 
+const ATT = { read: .45, tray: 1.0, node: 1.1 };
+
 const engine   = createEngine(document.getElementById('gl'), document.getElementById('stage'));
 const room     = createRoom(engine.scene);
 const loop     = createLoop({ scene: engine.scene, camera: engine.camera });
 const progress = createProgress();
 const capsule  = createCapsule({ scene: engine.scene, anchors: room.anchors, getLevel: progress.get });
-const player   = createPlayer({
-  scene: engine.scene,
-  camera: engine.camera,
-  dom: engine.renderer.domElement,
-  tray: room.trayArea,
-  worldHit: p => loop.hitTest(p),
-  getAimMesh: () => capsule.aimMesh(),
-});
+const player   = createPlayer({ scene: engine.scene, camera: engine.camera, dom: engine.renderer.domElement });
 const director = createDirector({ room, loop, capsule, camera: engine.camera, progress });
 room.register('token', player.tipMat, 1);
 
 createHud();
 createOverlay({ isVisible: engine.isVisible });
 
+/* цели внимания */
+function buildTargets() {
+  const list = [];
+  if (capsule.isIdle()) {
+    if (!capsule.isRead()) {
+      list.push({ kind: 'read', mesh: capsule.aimMesh(), time: ATT.read,
+        label: capsule.question(), onComplete: () => capsule.markRead() });
+    } else if (progress.get() < 1) {
+      list.push({ kind: 'tray', mesh: room.trayMesh, time: ATT.tray,
+        onComplete: () => { room.pulseTray(1); capsule.trySolve(); } });
+    }
+  }
+  if (capsule.isRead()) {
+    const an = loop.activeNode();
+    if (an) list.push({ kind: 'node', mesh: an.core, time: ATT.node, index: an.index, onComplete: () => loop.advance() });
+    list.push(...loop.idleNodes().map(n => ({ kind: 'fizzle', mesh: n.core, index: n.index })));
+  }
+  return list;
+}
+const attention = createAttention({
+  camera: engine.camera,
+  getTargets: buildTargets,
+  getFocus: () => player.isFocusing(),
+});
+bus.on('node:fizzle', ({ index }) => loop.doFizzle(index));
+
+/* сшивка событий */
 bus.on('task:spawn', ({ task }) => {
   if (mode === '3d' && progress.get() >= 1) loop.startTask(task.steps || 1);
 });
@@ -54,19 +77,6 @@ bus.on('task:solved', ({ answer }) => {
   economy.reward();
   economy.addSolved();
   bus.emit('toast', `ОТВЕТ ОТПРАВЛЕН → «${answer}»`);
-});
-bus.on('tray:hit', ({ direct }) => {
-  if (!direct) { room.pulseTray(.25); return; }
-  if (loop.isActive()) {
-    room.pulseTray(.25);
-    bus.emit('toast', 'АГЕНТ ЕЩЁ В ЦИКЛЕ — ЗАВЕРШИ ФАЗУ');
-    return;
-  }
-  room.pulseTray(1);
-  capsule.trySolve();
-});
-bus.on('aim:change', ({ hit }) => {
-  bus.emit('readout', hit ? { text: capsule.question() } : null);
 });
 
 initModes(m => {
@@ -86,7 +96,10 @@ bus.emit('mode:change', { mode });
 
 engine.onFrame((dt, t) => {
   economy.tick(dt);
-  if (mode === '3d') player.update(dt, t);
+  if (mode === '3d') {
+    player.update(dt, t);
+    if (player.isLocked()) attention.update(dt);
+  }
   capsule.update(dt, t);
   loop.update(dt, t, activeHL);
   room.update(dt, t, activeHL);

@@ -159,9 +159,9 @@
 
   <section class="stage" id="stage">
     <canvas id="gl"></canvas>
-    <div class="cross" id="cross"><i></i><i></i><i></i><i></i><i class="ring"></i></div>
+    <div class="cross" id="cross"><i></i><i></i><i></i><i></i></div>
     <div class="readout" id="readout"><b>ВХОДЯЩЕЕ</b><span id="readoutText"></span></div>
-    <div class="hint" id="hint">УДЕРЖИВАЙ ВЗГЛЯД НА ЦЕЛИ — ВНИМАНИЕ ТРАТИТ КОНТЕКСТ · ЛКМ — ФОКУС ×1.8</div>
+    <div class="hint" id="hint">ПРИЦЕЛЬСЯ В КАПСУЛУ — ПРОЧТЁШЬ · ВЫСТРЕЛ В ЛОТОК — ОТПРАВИТЬ ОТВЕТ</div>
     <div class="phase" id="phase">
       <span class="p-k">ФАЗА ЦИКЛА</span>
       <b id="phaseName">—</b>
@@ -178,7 +178,7 @@
     <div class="overlay" id="overlay">
       <div class="ov-box">
         <h3 id="ovTitle"><i class="pulse"></i>ВОЙТИ В ЯЩИК</h3>
-        <p id="ovKeys"><kbd>WASD</kbd> движение · <kbd>МЫШЬ</kbd> обзор · <kbd>ЛКМ</kbd> фокус · <kbd>ESC</kbd> выйти</p>
+        <p id="ovKeys"><kbd>WASD</kbd> движение · <kbd>МЫШЬ</kbd> обзор · <kbd>ЛКМ</kbd> выстрел токеном · <kbd>ESC</kbd> выйти</p>
         <p class="ov-sub">ТЫ — ВНУТРИ. ОТ ПЕРВОГО ЛИЦА.</p>
       </div>
     </div>
