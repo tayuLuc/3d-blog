@@ -20,6 +20,7 @@ export default defineConfig({
     qrcode(),
     VitePWA({
       registerType: 'autoUpdate',
+      navigateFallback: 'level.html',
       manifest: {
         name: 'BLACKBOX/AGENT — как устроен ИИ-агент изнутри',
         short_name: 'BLACKBOX',
