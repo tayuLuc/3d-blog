@@ -3,7 +3,7 @@ import { PointerLockControls } from 'three/addons/controls/PointerLockControls.j
 import { clamp } from '../utils.js';
 import { bus } from '../core/bus.js';
 
-const CFG = { eye: 1.65, speed: 3.4, headBob: .03, bounds: { x: 4.3, zMin: -5.1, zMax: 5.5 } };
+const CFG = { eye: 1.65, speed: 3.4, headBob: .03, bounds: { x: 4.3, zMin: -5.1, zMax: 5.5 }, fov: 72 };
 
 export function createPlayer({ scene, camera, dom }) {
   const controls = new PointerLockControls(camera, dom);
@@ -45,9 +45,13 @@ export function createPlayer({ scene, camera, dom }) {
     if (controls.isLocked) move(dt);
     else if (isTouch) { camera.position.x=Math.sin(t*.25)*1.2; camera.lookAt(0,1.6,-4); }
     if (shake > 0) {
-      camera.rotation.z = (Math.random()-.5)*.06*shake;
-      shake = Math.max(0, shake-dt*2.2);
-    } else camera.rotation.z = 0;
+      camera.fov = CFG.fov + Math.random() * 5 * shake;
+      camera.updateProjectionMatrix();
+      shake = Math.max(0, shake - dt * 2.2);
+    } else if (Math.abs(camera.fov - CFG.fov) > .1) {
+      camera.fov = CFG.fov;
+      camera.updateProjectionMatrix();
+    }
   }
 
   return {

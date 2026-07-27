@@ -13,7 +13,6 @@ const LAMPS = [
 
 export function createWarehouse(scene) {
   const group = new THREE.Group();
-  group.visible = false;
   scene.add(group);
 
   const ft = gridTex();
@@ -68,13 +67,9 @@ export function createWarehouse(scene) {
     new THREE.PointsMaterial({ color: '#8b96a5', size: .02, transparent: true, opacity: .45, depthWrite: false }));
   group.add(dust);
 
-  let vis = false;
-  function setVisible(v) { vis = v; group.visible = v; }
+  scene.fog = new THREE.Fog('#0d0f13', 3, 30);
 
   function update(dt, t) {
-    if (!vis) return;
-    scene.fog.near = 3;
-    scene.fog.far = 30;
     lamps.forEach(l => {
       l.light.intensity = l.base * (.82 + Math.sin(t * l.f + l.ph) * .12 + Math.sin(t * 13.7 + l.ph) * .06);
     });
@@ -86,5 +81,5 @@ export function createWarehouse(scene) {
     dust.rotation.y = t * .008;
   }
 
-  return { setVisible, update, bounds: WAREHOUSE_BOUNDS };
+  return { update, bounds: WAREHOUSE_BOUNDS };
 }

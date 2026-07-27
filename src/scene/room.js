@@ -13,6 +13,7 @@ const v3 = a => new THREE.Vector3(...a);
 
 export function createRoom(scene) {
   const group = new THREE.Group();
+  group.position.set(0, 0, 13);
   scene.add(group);
 
   const shellMat = new THREE.MeshStandardMaterial({ map: gridTex(), side: THREE.BackSide, roughness: .95 });
@@ -61,27 +62,28 @@ export function createRoom(scene) {
 
   const HL = { room:{mats:[stripMat],base:.55}, token:{mats:[stripMat],base:.55}, slot:{mats:[slotSlitMat],base:1.3}, tray:{mats:[trayGlowMat],base:.85} };
   let trayPulse = 0, trayCharge = 0;
-  let opened = false, openT = 0, hlWalls = 0, hlEntropy = 0;
+  let opened = false, openT = 0, hlWalls = 0, hlEntropy = 0, glass = false;
   const cFrom = new THREE.Color('#ffffff'), cTo = new THREE.Color('#59616c');
 
   bus.on('charge:state', e => { trayCharge = e.kind === 'tray' ? e.progress : 0; });
 
-  let vis = true;
-
   return {
+    group,
     anchors: { SLOT: v3(LAYOUT.capsule.spawn), HOVER: v3(LAYOUT.capsule.hover), TRAY: v3(LAYOUT.capsule.solve) },
     trayArea: LAYOUT.trayHit, trayMesh: trayGlow,
     register(key, mat, base) { HL[key] = { mats: [mat], base }; },
     pulseTray(i = 1) { trayPulse = Math.max(trayPulse, i); },
     setOpen(v) { opened = v; },
-    setVisible(v) { vis = v; group.visible = v; },
+    setGlass(v) { glass = v; },
     update(dt, t, active) {
-      if (!vis) return;
       const glow = Math.sin(t * 3.6) * .5 + .5;
       for (const k in HL) { const h = HL[k], target = h.base + (k === active ? glow * 1.8 : 0); h.mats.forEach(m => m.emissiveIntensity += (target - m.emissiveIntensity) * Math.min(1, dt * 7)); }
       if (opened && openT < 1) openT = Math.min(1, openT + dt / CFG.openDuration);
       if (!opened && openT > 0) openT = Math.max(0, openT - dt / CFG.openDuration);
-      const e = easeOut(openT); shellMat.transparent = e > 0; shellMat.opacity = 1 - e * .88; shellMat.color.lerpColors(cFrom, cTo, e);
+      const e = easeOut(openT);
+      shellMat.transparent = glass || e > 0;
+      shellMat.opacity = glass ? .22 : (1 - e * .88);
+      shellMat.color.lerpColors(cFrom, cTo, e);
       hlWalls += ((active === 'walls' ? 1 : 0) - hlWalls) * Math.min(1, dt * CFG.hlLerp);
       hlEntropy += ((active === 'entropy' ? 1 : 0) - hlEntropy) * Math.min(1, dt * CFG.hlLerp);
       edgeMat.opacity = e * (.75 + hlWalls * glow * .6);
